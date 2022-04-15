@@ -28,9 +28,7 @@ namespace WebviewTest
         public MainWindow()
         {
             InitializeComponent();
-            InitializeBrowserAsync();
-            wv.CoreWebView2InitializationCompleted += Wv_CoreWebView2InitializationCompleted;
-            wv.Source = new Uri("http://localhost:54622/firstfile.html");
+
         }
         public MainWindow(CoreWebView2Deferral deferral, CoreWebView2NewWindowRequestedEventArgs args)
         {
@@ -38,15 +36,16 @@ namespace WebviewTest
             Args = args;
 
             InitializeComponent();
-            InitializeBrowserAsync();
-            wv.CoreWebView2InitializationCompleted += Wv_CoreWebView2InitializationCompleted;
         }
-
-        void InitializeBrowserAsync()
+        private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            wv.EnsureCoreWebView2Async();
-        }
+            wv.CoreWebView2InitializationCompleted += Wv_CoreWebView2InitializationCompleted;
+            var env = await CoreWebView2Environment.CreateAsync(null, null, null);
+            await wv.EnsureCoreWebView2Async(env);
 
+            wv.Source = new Uri("http://localhost:54622/firstfile.html");
+
+        }
 
 
         private void Wv_CoreWebView2InitializationCompleted(object sender, Microsoft.Web.WebView2.Core.CoreWebView2InitializationCompletedEventArgs e)
@@ -54,7 +53,6 @@ namespace WebviewTest
 
             if (Deferral != null)
             {
-                Args.Handled = true;
                 Args.NewWindow = wv.CoreWebView2;
                 Deferral.Complete();
             }
@@ -67,11 +65,12 @@ namespace WebviewTest
         {
 
             var deferral = e.GetDeferral();
-
+            e.Handled = true;
             MainWindow mw = new MainWindow(Deferral = deferral, Args = e);
 
             mw.Show();
 
         }
+
     }
 }
